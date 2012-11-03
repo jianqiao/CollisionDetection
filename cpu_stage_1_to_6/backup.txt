@@ -1,0 +1,28 @@
+
+/* TODO */
+void
+	printPair(BinSpherePairArray*, int start = 0, int end = -1);
+
+void printPair(BinSpherePairArray* pairArray, int start, int end) {
+	if (start == -1)
+		start = 0;
+	if (end == -1)
+		end = pairArray->size;
+
+	for (int i = start; i < end; i++) {
+		printf("binID = %d,\t\t objectID = %d\n",
+				pairArray->objects[i].binID, pairArray->objects[i].objectID);
+	}
+}
+
+#ifdef FUNC_SPLIT_PRINT
+	printf("[split] total number of pairs: %d\n", numOfPairs);
+	printf("[split] minIDX = %d, minIDY = %d, minIDZ = %d\n", \
+							minIDX, minIDY, minIDZ);
+	printf("[split] maxIDX = %d, maxIDY = %d, maxIDZ = %d\n", \
+							maxIDX, maxIDY, maxIDZ);
+	printf("[split] sizeIDX = %d, sizeIDY = %d, sizeIDZ = %d\n", \
+			maxIDX - minIDX + 1, maxIDY - minIDY + 1, maxIDZ - minIDZ + 1);
+	printf("[split] bitwidthIDX = %d, bitwidthIDY = %d, bitwidthIDZ = %d\n", \
+									bitwidthIDX, bitwidthIDY, bitwidthIDZ);
+#endif
