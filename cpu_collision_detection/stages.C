@@ -8,7 +8,23 @@
 #include "types.h"
 #include "stages.h"
 #include "utils.h"
+#include "math.h"
 #include <vector>
+
+#define widthX	10
+#define widthY	10
+#define widthZ	10
+
+#define maskX	((1 << widthX) - 1)
+#define maskY	((1 << widthY) - 1)
+#define maskZ	((1 << widthZ) - 1)
+
+#define shiftX	(widthY + widthZ)
+#define shiftY	(widthZ)
+
+#define MC_Key(x,y,z) (((((uint)(x)) & maskX) << shiftX) | \
+					   ((((uint)(y)) & maskY) << shiftY) | \
+					    (((uint)(z)) & maskZ))
 
 SphereArray* initSphereArray(int xdim, int ydim, int zdim,
 							 float radius, float dist) {
@@ -42,8 +58,6 @@ SphereArray* initSphereArray(int xdim, int ydim, int zdim,
 	return sphereArray;
 }
 
-
-
 BinSpherePairArray* stage1To3(SphereArray* sphereArray,
 						      float binSize) {
 	struct BinSphereBound {
@@ -52,8 +66,6 @@ BinSpherePairArray* stage1To3(SphereArray* sphereArray,
 	};
 
 	float binRate = 1.0 / binSize;
-	int minIDX = 0x7FFFFFFF, minIDY = 0x7FFFFFFF, minIDZ = 0x7FFFFFFF;
-	int maxIDX = 0x80000000, maxIDY = 0x80000000, maxIDZ = 0x80000000;
 
 	uint numOfSpheres = sphereArray->size;
 	uint numOfPairs = 0;
@@ -82,39 +94,21 @@ BinSpherePairArray* stage1To3(SphereArray* sphereArray,
 		numOfPairs += (bound.maxIDX - bound.minIDX + 1) *
 					  (bound.maxIDY - bound.minIDY + 1) *
 					  (bound.maxIDZ - bound.minIDZ + 1);
-
-		#define MC_UpdateMinMax(minItem, maxItem) \
-			if (bound.minItem < minItem)		minItem = bound.minItem; \
-			else if (bound.maxItem > maxItem)	maxItem = bound.maxItem;
-
-		MC_UpdateMinMax(minIDX, maxIDX);
-		MC_UpdateMinMax(minIDY, maxIDY);
-		MC_UpdateMinMax(minIDZ, maxIDZ);
 	}
-
-	int bitwidthIDX = 32 - __builtin_clz(maxIDX - minIDX);
-	int bitwidthIDY = 32 - __builtin_clz(maxIDY - minIDY);
-	int bitwidthIDZ = 32 - __builtin_clz(maxIDZ - minIDZ);
-
-	int shiftX = bitwidthIDY + bitwidthIDZ;
-	int shiftY = bitwidthIDZ;
-	// int shiftZ = 0;
 
 	BinSpherePair *pairs = new BinSpherePair[numOfPairs];
 	int cnt = 0;
 	for (uint i = 0; i < numOfSpheres; i++) {
 		BinSphereBound &bound = bounds[i];
-		for (int idx = bound.minIDX - minIDX,
-				IDX_END = bound.maxIDX - minIDX; idx <= IDX_END; idx++) {
-			for (int idy = bound.minIDY - minIDY,
-					IDY_END = bound.maxIDY - minIDY; idy <= IDY_END; idy++) {
-				for (int idz = bound.minIDZ - minIDZ,
-						IDZ_END = bound.maxIDZ - minIDZ; idz <= IDZ_END; idz++) {
-
-					uint key = (idx << shiftX) | (idy << shiftY) | idz;
+		for (int idx = bound.minIDX; idx <= bound.maxIDX; idx++) {
+			for (int idy = bound.minIDY; idy <= bound.maxIDY; idy++) {
+				for (int idz = bound.minIDZ; idz <= bound.maxIDZ; idz++) {
+					uint key = MC_Key(idx, idy, idz);
 					pairs[cnt].objectID	= i;
 					pairs[cnt].binID	= key;
 					cnt++;
+
+//					printf("[%u] %d, %d, %d, key = %u\n", i, idx, idy, idz, key);
 				}
 			}
 		}
@@ -134,20 +128,24 @@ void stage4(BinSpherePairArray* pairArray) {
 	BinSpherePair *auxArr = new BinSpherePair[numOfPairs];
 	MC_RadixSort_32_16(arr, binID, auxArr, numOfPairs);
 	delete[] auxArr;
+
+//	for (uint i = 0; i < numOfPairs; i++) \
+		printf("[%u] %u %u\n", i, arr[i].binID, arr[i].objectID);
 }
 
-BinSphereDataArray *stage5(BinSpherePairArray *pairArray) {
+BinSphereDataArray *stage5To6(BinSpherePairArray *pairArray) {
 	BinSphereData *data = new BinSphereData[pairArray->size];
 	uint numOfPairs = pairArray->size;
 	BinSpherePair *pairs = pairArray->objects;
 
 	uint lastBinID = pairs[0].binID;
 	uint dataCnt = 0;
-	data[0].startIndex = 0;
+	data[dataCnt].binID = lastBinID;
+	data[dataCnt].startIndex = 0;
 	for (uint i = 1; i < numOfPairs; i++) {
 		if (pairs[i].binID != lastBinID) {
 			if (i - data[dataCnt].startIndex > 1) {
-				data[dataCnt].endIndex = i;
+				data[dataCnt].numOfObjects = i - data[dataCnt].startIndex;
 				dataCnt++;
 			}
 
@@ -158,12 +156,12 @@ BinSphereDataArray *stage5(BinSpherePairArray *pairArray) {
 	}
 	/* last */
 	if (numOfPairs - data[dataCnt].startIndex > 1) {
-		data[dataCnt].endIndex = numOfPairs;
+		data[dataCnt].numOfObjects = numOfPairs - data[dataCnt].startIndex;
 		dataCnt++;
 	}
 
 	BinSphereData *auxArr = new BinSphereData[dataCnt];
-	MC_RadixSort_32_16(data, binID, auxArr, dataCnt);
+	MC_RadixSort_32_16(data, numOfObjects, auxArr, dataCnt);
 
 	memcpy(auxArr, data, dataCnt * sizeof(BinSphereData));
 	delete[] data;
@@ -173,4 +171,55 @@ BinSphereDataArray *stage5(BinSpherePairArray *pairArray) {
 	dataArray->objects = auxArr;
 
 	return dataArray;
+}
+
+void stage7(SphereArray* sphereArray, BinSpherePairArray* pairArray, BinSphereDataArray *dataArray, float binSize) {
+	int numDetected = 0;
+	Sphere *spheres = sphereArray->objects;
+	BinSpherePair *pairs = pairArray->objects;
+
+	float halfBinRate = 0.5 / binSize;
+
+	for (int i = 0; i < dataArray->size; i++) {
+		uint binID = dataArray->objects[i].binID;
+		uint startIndex = dataArray->objects[i].startIndex;
+		uint endIndex = startIndex + dataArray->objects[i].numOfObjects;
+
+		for (uint objA = startIndex; objA < endIndex; objA++) {
+			for (uint objB = objA + 1; objB < endIndex; objB++) {
+				Sphere &sphereA = spheres[pairs[objA].objectID];
+				Sphere &sphereB = spheres[pairs[objB].objectID];
+
+				float distX = sphereA.x - sphereB.x;
+				float distY = sphereA.y - sphereB.y;
+				float distZ = sphereA.z - sphereB.z;
+
+				float distC = sqrt(distX * distX + distY * distY + distZ * distZ);
+				float distR = sphereA.r + sphereB.r;
+
+				if (distC <= distR) {
+					float idx = (sphereA.x + sphereB.x) * halfBinRate;
+					float idy = (sphereA.y + sphereB.y) * halfBinRate;
+					float idz = (sphereA.z + sphereB.z) * halfBinRate;
+
+					#define MC_FloorCast_STG7(v) \
+						(v >= 0) ? static_cast<int>(v) : static_cast<int>(v) - 1;
+
+					int x = MC_FloorCast_STG7(idx);
+					int y = MC_FloorCast_STG7(idy);
+					int z = MC_FloorCast_STG7(idz);
+
+					uint key = MC_Key(x, y, z);
+//					printf("x = %d, y = %d, z = %d, key = %u, binID = %u\n", x, y, z, key, binID);
+
+					if (key == binID) {
+						numDetected++;
+					}
+				}
+			}
+		}
+//		printf("------------------------------\n");
+	}
+
+	printf("numOfCollisions = %d\n", numDetected);
 }

@@ -33,7 +33,7 @@ template <class T>
 struct BinData {
 	uint	binID;
 	uint	startIndex;
-	uint	endIndex;
+	uint	numOfObjects;
 };
 typedef BinData<Sphere>				BinSphereData;
 

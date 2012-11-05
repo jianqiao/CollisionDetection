@@ -24,9 +24,10 @@ void
 
 /* radix sort bins according to # of objects inside */
 BinSphereDataArray*
-	stage5(BinSpherePairArray *pairArray);
+	stage5To6(BinSpherePairArray *pairArray);
 
-
+void
+	stage7(SphereArray* sphereArray, BinSpherePairArray* pairArray, BinSphereDataArray *dataArray, float binSize);
 
 
 #endif /* STAGES_H_ */
