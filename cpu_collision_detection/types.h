@@ -41,4 +41,22 @@ typedef SimpleArray<Sphere>			SphereArray;
 typedef SimpleArray<BinSpherePair>	BinSpherePairArray;
 typedef SimpleArray<BinSphereData>	BinSphereDataArray;
 
+
+
+#define widthX	10
+#define widthY	10
+#define widthZ	10
+
+#define maskX	((1 << widthX) - 1)
+#define maskY	((1 << widthY) - 1)
+#define maskZ	((1 << widthZ) - 1)
+
+#define shiftX	(widthY + widthZ)
+#define shiftY	(widthZ)
+
+#define MC_Key(x,y,z) (((((uint)(x)) & maskX) << shiftX) | \
+					   ((((uint)(y)) & maskY) << shiftY) | \
+					    (((uint)(z)) & maskZ))
+
+
 #endif /* TYPES_H_ */

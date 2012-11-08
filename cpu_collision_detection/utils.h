@@ -56,12 +56,6 @@ typedef struct {
 	double cpuMHz;
 } hwtimer_t;
 
-inline void resetTimer(hwtimer_t* timer)
-{
-	hrtime_t start = 0;
-	hrtime_t end = 0;
-}
-
 inline void initTimer(hwtimer_t* timer)
 {
 #if defined(__linux) || defined(__linux__) || defined(linux)
@@ -83,34 +77,6 @@ inline void initTimer(hwtimer_t* timer)
 #else
     timer->cpuMHz = 0;
 #endif
-
-	resetTimer(timer);
-}
-
-inline void startTimer(hwtimer_t* timer)
-{
-	timer->start = _rdtsc();
-}
-
-inline void stopTimer(hwtimer_t* timer)
-{
-	timer->end = _rdtsc();
-}
-
-inline uint64_t getTimerTicks(hwtimer_t* timer)
-{
-	return timer->end - timer->start;
-}
-
-inline uint64_t getTimerNs(hwtimer_t* timer)
-{
-	if (timer->cpuMHz == 0) {
-		/* Cannot use a timer without first initializing it
-		   or if not on linux
-		*/
-		return 0;
-	}
-	return (uint64_t)(((double)getTimerTicks(timer))/timer->cpuMHz*1000);
 }
 
 template <class T>

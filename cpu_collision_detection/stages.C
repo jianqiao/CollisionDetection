@@ -9,22 +9,8 @@
 #include "stages.h"
 #include "utils.h"
 #include "math.h"
+#include "string.h"
 #include <vector>
-
-#define widthX	10
-#define widthY	10
-#define widthZ	10
-
-#define maskX	((1 << widthX) - 1)
-#define maskY	((1 << widthY) - 1)
-#define maskZ	((1 << widthZ) - 1)
-
-#define shiftX	(widthY + widthZ)
-#define shiftY	(widthZ)
-
-#define MC_Key(x,y,z) (((((uint)(x)) & maskX) << shiftX) | \
-					   ((((uint)(y)) & maskY) << shiftY) | \
-					    (((uint)(z)) & maskZ))
 
 SphereArray* initSphereArray(int xdim, int ydim, int zdim,
 							 float radius, float dist) {
@@ -56,6 +42,89 @@ SphereArray* initSphereArray(int xdim, int ydim, int zdim,
 	sphereArray->objects = spheres;
 
 	return sphereArray;
+}
+
+struct Transformation {
+	double mat[4][4];
+
+	Transformation() {
+		for (int i = 0; i < 4; i++) {
+			for (int j = 0; j < 4; j++) {
+				mat[i][j] = 0;
+			}
+			mat[i][i] = 1;
+		}
+	}
+
+	static Transformation fromRotate(char axis, double th) {
+		Transformation ret;
+		if (axis == 'x') {
+			double mat[4][4] = { { 1,			0,			0,			0 },
+								 { 0,			cos(th),	sin(th),	0 },
+								 { 0,			-sin(th),	cos(th),	0 },
+								 { 0,			0,			0,			1 } };
+			memcpy(ret.mat, mat, sizeof mat);
+		}
+		else if (axis == 'y') {
+			double mat[4][4] = { {	cos(th),	0,			sin(th),	0 },
+								 {	0,			1,			0,			0 },
+								 {	-sin(th),	0,			cos(th),	0 },
+								 {	0,			0,			0,			1 } };
+			memcpy(ret.mat, mat, sizeof mat);
+		}
+		else if (axis == 'z') {
+			double mat[4][4] = { {	cos(th),	sin(th),	0,			0 },
+								 {	-sin(th),	cos(th),	0,			0 },
+								 {	0,			0,			1,			0 },
+								 {	0,			0,			0,			1 } };
+			memcpy(ret.mat, mat, sizeof mat);
+		}
+
+		return ret;
+	}
+
+	void combine(Transformation r) {
+		double result[4][4];
+		for (int i = 0; i < 4; i++) {
+			for (int j = 0; j < 4; j++) {
+				double sum = 0;
+				for (int k = 0; k < 4; k++) {
+					sum += r.mat[i][k] * mat[k][j];
+				}
+				result[i][j] = sum;
+			}
+		}
+		memcpy(mat, result, sizeof result);
+	}
+
+	void transform(Sphere &sphere) {
+		double w[4] = { sphere.x, sphere.y, sphere.z, 1 };
+		double v[4];
+		for (int i = 0; i < 4; i++) {
+			double sum = 0;
+			for (int j = 0; j < 4; j++) {
+				sum += mat[i][j] * w[j];
+			}
+			v[i] = sum;
+		}
+		sphere.x = v[0];
+		sphere.y = v[1];
+		sphere.z = v[2];
+	}
+
+
+};
+
+void rotate(SphereArray *sphereArray) {
+	Transformation t;
+	double PI = 3.14159265358979323846;
+	t.combine(Transformation::fromRotate('x', 45 * PI / 180));
+	t.combine(Transformation::fromRotate('y', 45 * PI / 180));
+//	t.combine(Transformation::fromRotate('z', 45 * PI / 180));
+
+	for (uint i = 0; i < sphereArray->size; i++) {
+		t.transform(sphereArray->objects[i]);
+	}
 }
 
 BinSpherePairArray* stage1To3(SphereArray* sphereArray,
@@ -210,7 +279,6 @@ void stage7(SphereArray* sphereArray, BinSpherePairArray* pairArray, BinSphereDa
 					int z = MC_FloorCast_STG7(idz);
 
 					uint key = MC_Key(x, y, z);
-//					printf("x = %d, y = %d, z = %d, key = %u, binID = %u\n", x, y, z, key, binID);
 
 					if (key == binID) {
 						numDetected++;
@@ -218,7 +286,6 @@ void stage7(SphereArray* sphereArray, BinSpherePairArray* pairArray, BinSphereDa
 				}
 			}
 		}
-//		printf("------------------------------\n");
 	}
 
 	printf("numOfCollisions = %d\n", numDetected);

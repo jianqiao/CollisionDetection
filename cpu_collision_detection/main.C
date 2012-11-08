@@ -27,6 +27,7 @@ namespace para {
 
 int main(int argc, char *argv[]) {
 	SphereArray *sphereArray = initSphereArray(para::xdim, para::ydim, para::zdim, para::radius, para::dist);
+	rotate(sphereArray);
 
 	timer.appendStart("binning");
 	BinSpherePairArray *pairArray = stage1To3(sphereArray, para::binSize);
@@ -42,8 +43,8 @@ int main(int argc, char *argv[]) {
 
 	timer.appendStart("CD");
 	stage7(sphereArray, pairArray, dataArray, para::binSize);
+//	gpu_stage7(sphereArray, pairArray, dataArray, para::binSize);
 	timer.appendEnd("CD");
-
 
 	printf("number of spheres = %u, memory = %lf M\n",
 			sphereArray->size,

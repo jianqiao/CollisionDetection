@@ -14,6 +14,9 @@
 SphereArray*
 	initSphereArray(int xdim, int ydim, int zdim, float radius, float dist);
 
+void
+	rotate(SphereArray *sphereArray);
+
 /* binning */
 BinSpherePairArray*
 	stage1To3(SphereArray* sphereArray, float binSize);
