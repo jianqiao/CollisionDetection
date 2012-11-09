@@ -81,6 +81,8 @@ __global__ void Binning1(int binSize, BinSphereBound *bounds, int numOfSpheres,
 						int *numOfBins,BinSpherePair *_pairs, int numOfThreads	)
 {
 	int threadId = blockIdx.x * blockDim.x + threadIdx.x;
+	//int numOfPairs=numOfBins[numOfSpheres-1];
+	//printf("%d\n",numOfPairs);
 		if(threadId < numOfThreads){
 
 
@@ -92,7 +94,7 @@ __global__ void Binning1(int binSize, BinSphereBound *bounds, int numOfSpheres,
 						for (int idz = bound.minIDZ; idz <= bound.maxIDZ; idz++) {
 							uint key = MC_Key(idx, idy, idz);
 							if(i!=0){
-
+							//if(threadId==799)printf("%d\n",numOfBins[i-1]);
 							_pairs[numOfBins[i-1]+cnt].objectID	= i;
 							_pairs[numOfBins[i-1]+cnt].binID	= key;
 							}
@@ -153,8 +155,9 @@ BinSpherePairArray* gpu_stage1To3(SphereArray* sphereArray,
 
 	BinSpherePair *pairs = new BinSpherePair[numOfPairs];
 	CUDA_CHECK_RETURN(cudaMalloc((void**) &_pairs, sizeof(BinSpherePair) * numOfPairs));
+	CUDA_CHECK_RETURN(cudaMemcpy(_numOfBins, numOfBins, sizeof(int) * sphereArray->size,cudaMemcpyHostToDevice));
 	Binning1<<<numOfBlocks, threadsPerBlock>>>(binSize, _bounds,
-											   numOfSpheres,_numOfBins,_pairs, numOfSpheres); //numOfThreads);
+											   numOfSpheres,_numOfBins,_pairs, numOfThreads); //numOfThreads);
 	CUDA_CHECK_RETURN(cudaMemcpy(pairs, _pairs, sizeof(BinSpherePair) * numOfPairs,cudaMemcpyDeviceToHost));
 
     /*
