@@ -1,10 +1,3 @@
-/*
- * stages.h
- *
- *  Created on: Nov 2, 2012
- *      Author: jianqiao
- */
-
 #ifndef STAGES_H_
 #define STAGES_H_
 
@@ -13,6 +6,9 @@
 /* initialize the sphere array */
 SphereArray*
 	initSphereArray(int xdim, int ydim, int zdim, float radius, float dist);
+
+void
+	rotate(SphereArray *sphereArray);
 
 /* binning */
 BinSpherePairArray*

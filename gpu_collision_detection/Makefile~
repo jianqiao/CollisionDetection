@@ -1,0 +1,28 @@
+CC = icc
+CC_FLAGS = -std=c99
+LD_FLAGS = -ltbb #-ltbbmalloc_proxy -ltbbmalloc
+#DEBUG = 1
+
+ifeq ($(DEBUG), 1)
+	CC_FLAGS += -g
+else
+	CC_FLAGS += -O2
+endif
+
+all: main
+
+clean:
+	rm -f main
+
+main: main.C
+	$(CC) $(CC_FLAGS) $(LD_FLAGS) main.C -o main
+
+othello-serial-opt: othello.C hwtimer.h othello.h othello-human.C othello-simple-ai.C othello-good-ai-serial-opt.C Makefile
+	$(CC) $(CC_FLAGS) $(LD_FLAGS) othello.C othello-human.C othello-simple-ai.C othello-good-ai-serial-opt.C -o othello-serial-opt #-cilk-serialize
+
+othello-parallel: hwtimer.h othello.C hwtimer.h othello.h othello-human.C othello-simple-ai.C othello-good-ai.C Makefile
+	$(CC) $(CC_FLAGS) $(LD_FLAGS) othello.C othello-human.C othello-simple-ai.C othello-good-ai.C -o othello-parallel
+
+othello-parallel-opt: hwtimer.h othello.C hwtimer.h othello.h othello-human.C othello-simple-ai.C othello-good-ai-opt.C Makefile
+	$(CC) $(CC_FLAGS) $(LD_FLAGS) othello.C othello-human.C othello-simple-ai.C othello-good-ai-opt.C -o othello-parallel-opt
+	

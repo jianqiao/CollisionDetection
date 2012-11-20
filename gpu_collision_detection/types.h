@@ -42,6 +42,11 @@ typedef SimpleArray<BinSpherePair>	BinSpherePairArray;
 typedef SimpleArray<BinSphereData>	BinSphereDataArray;
 
 
+struct BinSphereBound {
+	int minIDX, minIDY, minIDZ;
+	int maxIDX, maxIDY, maxIDZ;
+};
+
 
 #define widthX	10
 #define widthY	10

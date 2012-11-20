@@ -15,7 +15,7 @@ cleanup:
 coldetect.cpp: coldetect.h coldetect.cu Makefile
 	$(CUDACC) $(CUFLAGS) coldetect.cu -o coldetect.cpp
 
-main: main.cpp stages.h stages.cpp types.h utils.h coldetect.cpp Makefile
-	$(CC) $(CC_FLAGS) $(LD_FLAGS) main.cpp stages.cpp coldetect.cpp -o main
+main: main.C stages.h stages.C types.h utils.h coldetect.cpp Makefile
+	$(CC) $(CC_FLAGS) $(LD_FLAGS) main.C stages.C coldetect.cpp -o main
 	
 	
