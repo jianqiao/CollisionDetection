@@ -7,6 +7,9 @@
 SphereArray*
 	initSphereArray(int xdim, int ydim, int zdim, float radius, float dist);
 
+SphereArray*
+	initRandomSphereArray(int xdim, int ydim, int zdim, float radius, float dist);
+
 void
 	rotate(SphereArray *sphereArray);
 

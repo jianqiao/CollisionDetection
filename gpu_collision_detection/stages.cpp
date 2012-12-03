@@ -1,5 +1,6 @@
-#include "math.h"
-#include "string.h"
+#include <stdlib.h>
+#include <math.h>
+#include <string.h>
 #include <vector>
 
 #include "stages.h"
@@ -23,6 +24,14 @@ SphereArray* initSphereArray(int xdim, int ydim, int zdim,
 				sphere.r = radius;
 
 				vecSphere.push_back(sphere);
+/*
+				sphere.x = xdim * dist + x / 4;
+				sphere.y = ydim * dist + y / 4;
+				sphere.z = zdim * dist + z / 4;
+				sphere.r = radius / 4;
+
+				vecSphere.push_back(sphere);
+*/
 			}
 		}
 	}
@@ -37,6 +46,48 @@ SphereArray* initSphereArray(int xdim, int ydim, int zdim,
 
 	return sphereArray;
 }
+
+SphereArray* initRandomSphereArray(int xdim, int ydim, int zdim,
+							       float radius, float dist) {
+//	srand(time(0));
+	srand(1234);
+
+	double base = 0x7FFFFFFF;
+	double xspan = xdim * dist / base;
+	double yspan = ydim * dist / base;
+	double zspan = zdim * dist / base;
+	double ratio = 0.99;
+
+	std::vector<Sphere> vecSphere;
+	for (int i = 0; i < xdim; i++) {
+		float x = i * dist;
+		for (int j = 0; j < ydim; j++) {
+			float y = j * dist;
+			for (int k = 0; k < zdim; k++) {
+				float z = k * dist;
+
+				Sphere sphere;
+				sphere.x = rand() * xspan;
+				sphere.y = rand() * yspan;;
+				sphere.z = rand() * zspan;;
+				sphere.r = radius * ratio * rand() / base + radius * (1 - ratio);
+
+				vecSphere.push_back(sphere);
+			}
+		}
+	}
+
+	uint numOfSpheres = vecSphere.size();
+	Sphere *spheres = new Sphere[numOfSpheres];
+	std::copy(vecSphere.begin(), vecSphere.end(), spheres);
+
+	SphereArray *sphereArray = new SphereArray;
+	sphereArray->size = numOfSpheres;
+	sphereArray->objects = spheres;
+
+	return sphereArray;
+}
+
 
 struct Transformation {
 	double mat[4][4];

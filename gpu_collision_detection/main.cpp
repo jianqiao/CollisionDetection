@@ -14,30 +14,27 @@ namespace para {
 
 	float	radius	= 100;
 	float	dist	= 150;
-	float	binSize	= 273;
+	float	binSize	= 300;
 }
 
-
+extern
 int main(int argc, char *argv[]) {
 	SphereArray *sphereArray = initSphereArray(para::xdim, para::ydim, para::zdim, para::radius, para::dist);
-	// rotate(sphereArray);
+//	SphereArray *sphereArray = initRandomSphereArray(para::xdim, para::ydim, para::zdim, para::radius, para::dist);
+//	rotate(sphereArray);
 
-	timer.appendStart("binningSorting");
-	BinSpherePairArray *pairArray = gpu_stage1To4(sphereArray, para::binSize);
+	gpu_detect(sphereArray, para::binSize);
 
-//	BinSpherePairArray *pairArray = stage1To3(sphereArray, para::binSize);
-//	stage4(pairArray);
-	timer.appendEnd("binningSorting");
-
-	timer.appendStart("data");
-	BinSphereDataArray *dataArray = stage5To6(pairArray);
-	timer.appendEnd("data");
-
+/*
 	timer.appendStart("CD");
-//	stage7(sphereArray, pairArray, dataArray, para::binSize);
-	gpu_stage7(sphereArray, pairArray, dataArray, para::binSize);
+	BinSpherePairArray *pairArray = stage1To3(sphereArray, para::binSize);
+	stage4(pairArray);
+	BinSphereDataArray *dataArray = stage5To6(pairArray);
+	stage7(sphereArray, pairArray, dataArray, para::binSize);
 	timer.appendEnd("CD");
+*/
 
+/*
 	printf("number of spheres = %u, memory = %lf M\n",
 			sphereArray->size,
 			(sphereArray->size * sizeof(Sphere)) / 1024.0 / 1024.0);
@@ -52,14 +49,13 @@ int main(int argc, char *argv[]) {
 	uint cdMax = 0;
 	for (int i = 0; i < dataArray->size; i++) {
 		uint n = dataArray->objects[i].numOfObjects;
+		printf("%d\n", n);
 		cdSum += n * n;
 		if (n > cdMax) cdMax = n;
 	}
 	printf("total number of pairs processed: %u\n", cdSum);
 	printf("max bin size: %u\n", cdMax);
-/*
-	printf("total time for binning & sorting: %lf\n", timer.getTotalTime("binningSorting"));
-	printf("total time for rearranging bins: %lf\n", timer.getTotalTime("data"));
+
 	printf("total time for CD: %lf\n", timer.getTotalTime("CD"));
 */
 	return 0;

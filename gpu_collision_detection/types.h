@@ -8,6 +8,7 @@
 #ifndef TYPES_H_
 #define TYPES_H_
 
+typedef unsigned short ushort;
 typedef unsigned int uint;
 typedef unsigned long long ull;
 
@@ -41,12 +42,22 @@ typedef SimpleArray<Sphere>			SphereArray;
 typedef SimpleArray<BinSpherePair>	BinSpherePairArray;
 typedef SimpleArray<BinSphereData>	BinSphereDataArray;
 
-
 struct BinSphereBound {
 	int minIDX, minIDY, minIDZ;
 	int maxIDX, maxIDY, maxIDZ;
 };
 
+struct GPUBinData {
+	uint binID;
+	uint startIndex;
+};
+
+struct CollisionInfo {
+	uint a_id, b_id;
+	float normal_x, normal_y, normal_z;
+	float a_x, a_y, a_z;
+	float b_x, b_y, b_z;
+};
 
 #define widthX	10
 #define widthY	10
